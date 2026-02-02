@@ -9,6 +9,27 @@ from PyQt6.QtGui import QColor, QPalette, QFont
 from utils import take_screenshot, set_window_affinity
 from worker import AnalysisWorker
 
+# Custom QTextEdit that always shows arrow cursor
+class ArrowCursorTextEdit(QTextEdit):
+    def enterEvent(self, event):
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+        super().enterEvent(event)
+    
+    def mouseMoveEvent(self, event):
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+        super().mouseMoveEvent(event)
+    
+    def cursorRect(self, cursor=None):
+        # Return empty rect to prevent cursor rendering
+        from PyQt6.QtCore import QRect
+        return QRect()
+    
+    def paintEvent(self, event):
+        # Paint but hide the text cursor
+        super().paintEvent(event)
+        # Force arrow cursor after paint
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+
 # Signal bridge for handling hotkey events in the main thread
 class HotkeyBridge(QObject):
     triggered = pyqtSignal()
@@ -27,7 +48,8 @@ class OverlayWindow(QWidget):
         # Transparency/Opacity
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowOpacity(0.9)  # Slightly transparent
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        # Ensure cursor stays as arrow pointer
+        self.setCursor(Qt.CursorShape.ArrowCursor)
         
         # Set dark theme style
         self.setStyleSheet("""
@@ -83,10 +105,20 @@ class OverlayWindow(QWidget):
         header_layout.addWidget(self.close_btn)
         self.layout.addLayout(header_layout)
         
-        # Content Area
-        self.text_area = QTextEdit()
-        self.text_area.setReadOnly(True)
-        self.layout.addWidget(self.text_area)
+        # Content Area (scrollable)
+        from PyQt6.QtWidgets import QScrollArea
+        self.text_area = QLabel()
+        self.text_area.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        self.text_area.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self.text_area.setStyleSheet("background-color: #252526; color: #d4d4d4; font-family: Consolas, 'Courier New', monospace; font-size: 14px; border: none;")
+        self.text_area.setCursor(Qt.CursorShape.ArrowCursor)
+        self.text_area.setWordWrap(True)
+        self.text_area.setText("")
+        self.text_area.setTextFormat(Qt.TextFormat.RichText)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setWidget(self.text_area)
+        self.layout.addWidget(self.scroll_area)
         
         # Resize Grip (Bottom Right)
         # Note: Frameless windows lose native resizing, so we can add a size grip or implement manual resizing.
@@ -169,7 +201,14 @@ class OverlayWindow(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             self.old_pos = event.globalPosition().toPoint()
 
+    def enterEvent(self, event):
+        # When mouse enters the window, ensure cursor is arrow
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+        super().enterEvent(event)
+
     def mouseMoveEvent(self, event):
+        # Always keep cursor as arrow pointer
+        self.setCursor(Qt.CursorShape.ArrowCursor)
         if self.old_pos:
             delta = event.globalPosition().toPoint() - self.old_pos
             self.move(self.pos() + delta)
@@ -180,7 +219,8 @@ class OverlayWindow(QWidget):
 
     def start_analysis(self):
         self.status_label.setText("Capturing & Analyzing...")
-        self.text_area.setHtml("<i>Processing...</i>")
+        self.text_area.setTextFormat(Qt.TextFormat.RichText)
+        self.text_area.setText("<i>Processing...</i>")
         
         # 1. Take Screenshot
         # Note: Even with affinity, it's safer to use the dedicated privacy flag.
@@ -201,11 +241,9 @@ class OverlayWindow(QWidget):
         self.status_label.setText("Ready")
         # Convert markdown to basic HTML for display
         html = markdown.markdown(result_markdown, extensions=['fenced_code', 'codehilite'])
-        
-        # Wrap code blocks in some styling if needed (basic markdown output is often raw)
-        # We can add some CSS for code blocks in `setStyleSheet` but `markdown` lib produces <pre><code>
-        
-        self.text_area.setHtml(html)
+        self.text_area.setText("")
+        self.text_area.setTextFormat(Qt.TextFormat.RichText)
+        self.text_area.setText(html)
 
     def on_analysis_error(self, error_msg):
         self.status_label.setText("Error")
