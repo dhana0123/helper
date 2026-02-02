@@ -1,0 +1,7 @@
+PyQt6
+keyboard
+together
+python-dotenv
+Pillow
+pywin32
+markdown
