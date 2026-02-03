@@ -17,7 +17,7 @@ class APIClient:
         # Default model
         self.model = "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
 
-    def analyze_image(self, image, prompt="You are a code analysis interview assistant. Analyze the code and provide a solution or explanation."):
+    def analyze_image(self, image, prompt="You are a code analysis interview assistant. Analyze the code and provide a solution or explanation. concisely."):
         """
                 
         Args:
@@ -67,6 +67,44 @@ class APIClient:
 
         except Exception as e:
             return f"Error analyzing image: {str(e)}"
+
+    def send_text_prompt(self, prompt):
+        """
+        Send a text-only prompt to the LLM without an image.
+        
+        Args:
+            prompt: Text prompt for the AI.
+            
+        Returns:
+            String response from the AI.
+        """
+        try:
+            # Construct the messages payload
+            messages = [
+                {
+                    "role": "user",
+                    "content": prompt + "concisely.",
+                }
+            ]
+
+            stream = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                stream=True,
+            )
+
+            # Accumulate the response
+            response_text = ""
+            for chunk in stream:
+                if hasattr(chunk, 'choices') and chunk.choices and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+                    if delta and delta.content:
+                        response_text += delta.content
+            
+            return response_text
+
+        except Exception as e:
+            return f"Error sending prompt: {str(e)}"
 
 if __name__ == "__main__":
     # Simple test (requires valid key and an image)

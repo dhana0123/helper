@@ -1,7 +1,9 @@
-PyQt6
-keyboard
-together
-python-dotenv
-Pillow
-pywin32
-markdown
+PyQt6>=6.0.0
+keyboard>=0.13.5
+together>=0.2.0
+python-dotenv>=0.21.0
+Pillow>=10.0.0
+pywin32>=305
+markdown>=3.4.0
+pygments>=2.14.0
+pymdown-extensions>=10.0

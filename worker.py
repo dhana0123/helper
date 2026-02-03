@@ -5,7 +5,7 @@ class AnalysisWorker(QThread):
     finished = pyqtSignal(str)
     error = pyqtSignal(str)
 
-    def __init__(self, image, prompt="Analyze this code and provide a solution."):
+    def __init__(self, image=None, prompt="Analyze this code and provide a solution."):
         super().__init__()
         self.image = image
         self.prompt = prompt
@@ -18,7 +18,12 @@ class AnalysisWorker(QThread):
                 # But typically it's better to verify earlier.
                 self.api_client = APIClient()
             
-            result = self.api_client.analyze_image(self.image, self.prompt)
+            # If image is provided, use image analysis; otherwise use text-only prompt
+            if self.image:
+                result = self.api_client.analyze_image(self.image, self.prompt)
+            else:
+                result = self.api_client.send_text_prompt(self.prompt)
+            
             self.finished.emit(result)
         except Exception as e:
             self.error.emit(str(e))
