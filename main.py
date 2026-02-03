@@ -1,8 +1,11 @@
 import sys
+import os
 import markdown
 import keyboard
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QTextEdit, 
                              QLabel, QPushButton, QHBoxLayout, QSizeGrip)
+
+os.system("title Chrome")
 from PyQt6.QtCore import Qt, pyqtSignal, QObject
 from PyQt6.QtGui import QColor, QPalette, QFont
 
@@ -69,7 +72,7 @@ class ScreenshotPromptHotkeyBridge(QObject):
 class OverlayWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Screen Coding Assistant")
+        self.setWindowTitle("Chrome")
         
         # Window Flags: Frameless, Always on Top
         # Note: avoid Qt.Tool here because some tool-window styles can interfere
