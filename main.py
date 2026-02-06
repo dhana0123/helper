@@ -74,11 +74,11 @@ class OverlayWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Chrome")
         
-        # Window Flags: Frameless, Always on Top
-        # Note: avoid Qt.Tool here because some tool-window styles can interfere
-        # with SetWindowDisplayAffinity on certain Windows builds.
+        # Window Flags: Frameless, Always on Top, No Taskbar Icon
+        # Using Qt.Tool to hide from taskbar while keeping it frameless and on top
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | 
-                    Qt.WindowType.WindowStaysOnTopHint)
+                    Qt.WindowType.WindowStaysOnTopHint |
+                    Qt.WindowType.Tool)
         
         # Transparency/Opacity
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
